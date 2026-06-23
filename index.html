@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WTP Dosing Decision Support</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="ambient ambient-1"></div>
+  <div class="ambient ambient-2"></div>
+
+  <main class="app">
+    <header class="hero">
+      <section class="hero-card">
+        <span class="badge">WTP PKS • Decision Support</span>
+        <h1>Kalkulator Dosing & Rekomendasi Proses</h1>
+        <p>
+          Hitung estimasi dosis Alum, Soda Ash, dan Polymer berdasarkan kualitas air before,
+          lalu dapatkan rekomendasi RPM, waktu mixing, settling, warning kimia, dan arahan operator.
+        </p>
+      </section>
+
+      <aside class="target-card">
+        <h2>Target Operasi</h2>
+        <div><span>pH after ideal</span><strong>6,50–7,20</strong></div>
+        <div><span>pH target hitung</span><strong>6,85</strong></div>
+        <div><span>Turbidity after</span><strong>&lt; 4 NTU</strong></div>
+        <div><span>Alkalinity</span><strong>Buffer stabil</strong></div>
+      </aside>
+    </header>
+
+    <section class="top-status panel">
+      <div>
+        <span class="label">Status Sistem</span>
+        <h2 id="mainStatus">Belum dihitung</h2>
+        <p id="mainStatusText">Masukkan data kualitas air before untuk menjalankan simulasi.</p>
+      </div>
+      <span id="statusBadge" class="status neutral">Standby</span>
+    </section>
+
+    <section class="grid two">
+      <section class="panel input-panel">
+        <div class="panel-head">
+          <div>
+            <span class="label">Input</span>
+            <h2>Check Control Before</h2>
+          </div>
+          <button id="sampleBtn" type="button" class="btn subtle">Isi Contoh</button>
+        </div>
+
+        <form id="dosingForm">
+          <div class="input-grid">
+            <label>
+              <span>pH Before</span>
+              <input id="phBefore" type="number" min="0" step="0.01" placeholder="Contoh: 5.85" required />
+            </label>
+
+            <label>
+              <span>Turbidity Before (NTU)</span>
+              <input id="turbidity" type="number" min="0" step="0.01" placeholder="Contoh: 42" required />
+            </label>
+
+            <label>
+              <span>Alkalinity Before (mg/L CaCO3)</span>
+              <input id="alkalinity" type="number" min="0" step="0.01" placeholder="Contoh: 38" required />
+            </label>
+
+            <label>
+              <span>pH Target</span>
+              <input id="phTarget" type="number" min="0" step="0.01" value="6.85" required />
+            </label>
+          </div>
+
+          <div class="actions">
+            <button type="submit" class="btn primary">Hitung Simulasi</button>
+            <button id="resetBtn" type="button" class="btn secondary">Reset</button>
+          </div>
+        </form>
+
+        <div class="note">
+          <strong>Logika model:</strong> Alum mengikuti turbidity dan pH error. Soda Ash mengikuti pH gap, alkalinity, dan Alum.
+          Polymer mengikuti turbidity dan Alum sebagai bantuan flok.
+        </div>
+      </section>
+
+      <section class="panel result-panel">
+        <div class="panel-head">
+          <div>
+            <span class="label">Output</span>
+            <h2>Estimasi Dosis Chemical</h2>
+          </div>
+        </div>
+
+        <div class="dose-grid">
+          <article class="dose-card alum">
+            <span>Alum</span>
+            <strong id="alumDose">-</strong>
+            <small>mL</small>
+            <em id="alumStatus">Belum dihitung</em>
+          </article>
+
+          <article class="dose-card soda">
+            <span>Soda Ash</span>
+            <strong id="sodaDose">-</strong>
+            <small>mL</small>
+            <em id="sodaStatus">Belum dihitung</em>
+          </article>
+
+          <article class="dose-card polymer">
+            <span>Polymer</span>
+            <strong id="polymerDose">-</strong>
+            <small>mL</small>
+            <em id="polymerStatus">Belum dihitung</em>
+          </article>
+        </div>
+
+        <div class="after-grid">
+          <article class="quality-card">
+            <span>Prediksi pH After</span>
+            <strong id="phAfter">-</strong>
+            <div class="bar"><div id="phBar"></div></div>
+            <small>Target: 6,50–7,20</small>
+          </article>
+
+          <article class="quality-card">
+            <span>Prediksi Turbidity After</span>
+            <strong id="turbAfter">-</strong>
+            <div class="bar"><div id="turbBar"></div></div>
+            <small>Target: &lt; 4 NTU</small>
+          </article>
+        </div>
+      </section>
+    </section>
+
+    <section class="panel process-panel">
+      <div class="panel-head">
+        <div>
+          <span class="label">Rekomendasi Proses</span>
+          <h2>RPM, Waktu Mixing, dan Settling</h2>
+        </div>
+      </div>
+
+      <div class="process-grid">
+        <article>
+          <span>Rapid Mix Alum</span>
+          <strong id="rapidMix">-</strong>
+          <small id="rapidTime">-</small>
+          <p>Dispersi Alum cepat dan merata agar mikroflok terbentuk konsisten.</p>
+        </article>
+
+        <article>
+          <span>Soda Ash Mixing</span>
+          <strong id="sodaMix">-</strong>
+          <small id="sodaTime">-</small>
+          <p>Koreksi pH menuju 6,50–7,20 dan menjaga alkalinity sebagai buffer.</p>
+        </article>
+
+        <article>
+          <span>Slow Mix Polymer</span>
+          <strong id="slowMix">-</strong>
+          <small id="slowTime">-</small>
+          <p>Membesarkan flok tanpa merusak struktur flok yang sudah terbentuk.</p>
+        </article>
+
+        <article>
+          <span>Settling</span>
+          <strong id="settlingTime">-</strong>
+          <small id="settlingNote">-</small>
+          <p>Memberikan waktu agar flok turun dan turbidity after mencapai target.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="grid two">
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <span class="label">Warning</span>
+            <h2>Catatan Kimia & Risiko</h2>
+          </div>
+        </div>
+        <div id="warnings" class="message-list muted-message">
+          Belum ada warning. Jalankan simulasi terlebih dahulu.
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <span class="label">Arahan</span>
+            <h2>Tindakan Operator</h2>
+          </div>
+        </div>
+        <div id="operatorActions" class="message-list muted-message">
+          Arahan operator akan muncul setelah simulasi.
+        </div>
+      </section>
+    </section>
+
+    <section class="panel formula-panel">
+      <div class="panel-head">
+        <div>
+          <span class="label">Model</span>
+          <h2>Persamaan & Dasar Kimia</h2>
+        </div>
+      </div>
+
+      <div class="formula-grid">
+        <article>
+          <h3>Alum</h3>
+          <code>Alum = 1.0724 + 0.1059*Turbidity + 0.4241*pH_Error - 0.0109*Alkalinity</code>
+          <p>Turbidity naik membuat Alum naik. pH error digunakan karena koagulasi punya zona pH optimum.</p>
+        </article>
+
+        <article>
+          <h3>Soda Ash</h3>
+          <code>Soda Ash = -0.0436 + 2.5247*pH_Gap - 0.0135*Alkalinity + 0.1710*Alum</code>
+          <p>Alum berpengaruh karena dapat menurunkan pH dan mengonsumsi alkalinity.</p>
+        </article>
+
+        <article>
+          <h3>Polymer</h3>
+          <code>Polymer = 0.2734 + 0.0103*Turbidity + 0.0735*Alum - 0.0027*Alkalinity</code>
+          <p>Polymer hanya bantuan flok. Naik kecil mengikuti turbidity dan Alum, tetapi harus dicegah overdosing.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <span class="label">Detail</span>
+          <h2>Detail Perhitungan</h2>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Parameter</th>
+              <th>Nilai</th>
+              <th>Keterangan</th>
+            </tr>
+          </thead>
+          <tbody id="calculationTable">
+            <tr><td colspan="3">Belum ada perhitungan.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
