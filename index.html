@@ -3,48 +3,51 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WTP Dosing Decision Support V2</title>
+  <title>WTP Dosing PPM & mL</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="ambient ambient-1"></div>
-  <div class="ambient ambient-2"></div>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
 
   <main class="app">
     <header class="hero">
       <section class="hero-card">
-        <span class="badge">WTP PKS • Formula V2</span>
-        <h1>Kalkulator Dosing Berbasis Target pH & Turbidity</h1>
+        <span class="badge">WTP PKS • PPM & mL • Formula V3</span>
+        <h1>Dosing untuk Flok Optimal, pH Target, dan Turbidity Target</h1>
         <p>
-          Formula diperbaiki agar tidak hanya mengejar pH. Alum dan Polymer sekarang ikut membaca
-          <b>turbidity gap</b>, yaitu selisih turbidity before terhadap target turbidity after.
+          Kalkulator ini menghitung kebutuhan chemical dalam <b>ppm</b> dan mengonversinya ke <b>mL larutan</b>.
+          Larutan stok diset sesuai permintaan: <b>Alum 10.000 ppm</b>, <b>Soda Ash 10.000 ppm</b>,
+          dan <b>Polymer 100 ppm</b>. Tujuannya bukan sekadar angka, tetapi memastikan air memenuhi syarat:
+          flok terbentuk baik, pH after 6,50–7,20, dan turbidity after mencapai target.
         </p>
       </section>
 
       <aside class="target-card">
-        <h2>Target Operasi</h2>
-        <div><span>pH after ideal</span><strong>6,50–7,20</strong></div>
-        <div><span>pH target hitung</span><strong>6,85</strong></div>
-        <div><span>Turbidity after target</span><strong>&lt; 4 NTU</strong></div>
-        <div><span>Model</span><strong>pH + Turbidity</strong></div>
+        <h2>Tujuan Operasi</h2>
+        <div><span>pH after</span><strong>6,50–7,20</strong></div>
+        <div><span>Turbidity after</span><strong>&lt; target</strong></div>
+        <div><span>Flok</span><strong>Besar, padat, turun</strong></div>
+        <div><span>Stok Alum/Soda</span><strong>10.000 ppm</strong></div>
+        <div><span>Stok Polymer</span><strong>100 ppm</strong></div>
       </aside>
     </header>
 
-    <section class="top-status panel">
+    <section class="panel status-panel">
       <div>
-        <span class="label">Status Sistem</span>
+        <span class="label">Status Kelayakan Air</span>
         <h2 id="mainStatus">Belum dihitung</h2>
-        <p id="mainStatusText">Masukkan kualitas air before dan target turbidity untuk menjalankan simulasi.</p>
+        <p id="mainStatusText">Masukkan kualitas air before, target, volume sampel, dan konsentrasi larutan stok.</p>
       </div>
       <span id="statusBadge" class="status neutral">Standby</span>
     </section>
 
     <section class="grid two">
-      <section class="panel input-panel">
+      <section class="panel">
         <div class="panel-head">
           <div>
             <span class="label">Input</span>
-            <h2>Check Control Before</h2>
+            <h2>Kualitas Air & Target</h2>
           </div>
           <button id="sampleBtn" type="button" class="btn subtle">Isi Contoh</button>
         </div>
@@ -67,7 +70,7 @@
             </label>
 
             <label>
-              <span>pH Target</span>
+              <span>pH Target Tengah</span>
               <input id="phTarget" type="number" min="0" step="0.01" value="6.85" required />
             </label>
 
@@ -77,55 +80,76 @@
             </label>
 
             <label>
-              <span>Mode Koreksi Turbidity</span>
-              <select id="turbMode">
-                <option value="normal" selected>Normal</option>
-                <option value="aggressive">Agresif untuk air sangat keruh</option>
-                <option value="conservative">Konservatif hemat chemical</option>
+              <span>Volume Sampel / Jar Test (mL)</span>
+              <input id="sampleVolume" type="number" min="1" step="1" value="1000" required />
+            </label>
+
+            <label>
+              <span>Larutan Alum (ppm)</span>
+              <input id="alumStock" type="number" min="1" step="1" value="10000" required />
+            </label>
+
+            <label>
+              <span>Larutan Soda Ash (ppm)</span>
+              <input id="sodaStock" type="number" min="1" step="1" value="10000" required />
+            </label>
+
+            <label>
+              <span>Larutan Polymer (ppm)</span>
+              <input id="polymerStock" type="number" min="1" step="1" value="100" required />
+            </label>
+
+            <label>
+              <span>Mode Tujuan</span>
+              <select id="operationMode">
+                <option value="balanced" selected>Seimbang: pH + turbidity + flok</option>
+                <option value="turbidity">Prioritas turbidity dan flok</option>
+                <option value="ph">Prioritas pH stabil</option>
+                <option value="conservative">Konservatif: cegah overdosing</option>
               </select>
             </label>
           </div>
 
           <div class="actions">
-            <button type="submit" class="btn primary">Hitung Simulasi</button>
+            <button type="submit" class="btn primary">Hitung PPM & mL</button>
             <button id="resetBtn" type="button" class="btn secondary">Reset</button>
           </div>
         </form>
 
         <div class="note">
-          <strong>Perbaikan utama:</strong> Alum sekarang memakai <b>Turbidity Gap</b> dan bukan sekadar turbidity before.
-          Polymer juga dipengaruhi sisa gap turbidity yang belum tertangani oleh Alum.
+          <b>Konversi mL:</b> mL larutan = ppm dosis × volume sampel mL ÷ ppm larutan stok.
+          Untuk sampel 1.000 mL: Alum/Soda 10.000 ppm berarti 1 ppm = 0,10 mL, sedangkan Polymer 100 ppm berarti 1 ppm = 10 mL.
         </div>
       </section>
 
-      <section class="panel result-panel">
+      <section class="panel">
         <div class="panel-head">
           <div>
             <span class="label">Output</span>
-            <h2>Estimasi Dosis Chemical</h2>
+            <h2>Dosis Chemical</h2>
           </div>
         </div>
 
         <div class="dose-grid">
           <article class="dose-card alum">
             <span>Alum</span>
-            <strong id="alumDose">-</strong>
-            <small>mL</small>
-            <em id="alumStatus">Belum dihitung</em>
+            <strong id="alumMl">-</strong>
+            <small>mL larutan</small>
+            <em id="alumPpm">- ppm</em>
           </article>
 
           <article class="dose-card soda">
             <span>Soda Ash</span>
-            <strong id="sodaDose">-</strong>
-            <small>mL</small>
-            <em id="sodaStatus">Belum dihitung</em>
+            <strong id="sodaMl">-</strong>
+            <small>mL larutan</small>
+            <em id="sodaPpm">- ppm</em>
           </article>
 
           <article class="dose-card polymer">
             <span>Polymer</span>
-            <strong id="polymerDose">-</strong>
-            <small>mL</small>
-            <em id="polymerStatus">Belum dihitung</em>
+            <strong id="polymerMl">-</strong>
+            <small>mL larutan</small>
+            <em id="polymerPpm">- ppm</em>
           </article>
         </div>
 
@@ -143,14 +167,50 @@
             <div class="bar"><div id="turbBar"></div></div>
             <small>Target: &lt; <span id="turbTargetLabel">4</span> NTU</small>
           </article>
+
+          <article class="quality-card wide">
+            <span>Prediksi Kualitas Flok</span>
+            <strong id="flocScore">-</strong>
+            <div class="bar"><div id="flocBar"></div></div>
+            <small id="flocText">Belum dihitung.</small>
+          </article>
         </div>
       </section>
     </section>
 
-    <section class="panel process-panel">
+    <section class="panel">
       <div class="panel-head">
         <div>
-          <span class="label">Rekomendasi Proses</span>
+          <span class="label">Tujuan Proses</span>
+          <h2>Apakah Kondisi Air Memenuhi Syarat?</h2>
+        </div>
+      </div>
+
+      <div class="goal-grid">
+        <article>
+          <span>1. Pembentukan Flok</span>
+          <strong id="goalFloc">-</strong>
+          <p id="goalFlocText">Belum dihitung.</p>
+        </article>
+
+        <article>
+          <span>2. pH Tercapai Target</span>
+          <strong id="goalPh">-</strong>
+          <p id="goalPhText">Belum dihitung.</p>
+        </article>
+
+        <article>
+          <span>3. Turbidity Tercapai Target</span>
+          <strong id="goalTurb">-</strong>
+          <p id="goalTurbText">Belum dihitung.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <span class="label">Proses</span>
           <h2>RPM, Waktu Mixing, dan Settling</h2>
         </div>
       </div>
@@ -160,28 +220,28 @@
           <span>Rapid Mix Alum</span>
           <strong id="rapidMix">-</strong>
           <small id="rapidTime">-</small>
-          <p>Dispersi Alum cepat dan merata untuk menurunkan turbidity gap.</p>
+          <p>Tujuan: menyebarkan Alum cepat agar muatan koloid ternetralisasi dan mikroflok mulai terbentuk.</p>
         </article>
 
         <article>
           <span>Soda Ash Mixing</span>
           <strong id="sodaMix">-</strong>
           <small id="sodaTime">-</small>
-          <p>Koreksi pH setelah efek Alum dihitung.</p>
+          <p>Tujuan: menjaga pH after agar proses koagulasi tidak gagal karena pH terlalu rendah atau terlalu tinggi.</p>
         </article>
 
         <article>
           <span>Slow Mix Polymer</span>
           <strong id="slowMix">-</strong>
           <small id="slowTime">-</small>
-          <p>Membesarkan flok dan membantu mencapai turbidity target.</p>
+          <p>Tujuan: mengikat mikroflok menjadi flok besar dan padat tanpa memecahkan flok.</p>
         </article>
 
         <article>
           <span>Settling</span>
           <strong id="settlingTime">-</strong>
           <small id="settlingNote">-</small>
-          <p>Semakin besar turbidity gap, settling perlu lebih lama.</p>
+          <p>Tujuan: memberi waktu flok turun sampai turbidity after mencapai target.</p>
         </article>
       </div>
     </section>
@@ -191,11 +251,11 @@
         <div class="panel-head">
           <div>
             <span class="label">Warning</span>
-            <h2>Catatan Kimia & Risiko</h2>
+            <h2>Catatan Kimia</h2>
           </div>
         </div>
         <div id="warnings" class="message-list muted-message">
-          Belum ada warning. Jalankan simulasi terlebih dahulu.
+          Belum ada warning.
         </div>
       </section>
 
@@ -207,7 +267,7 @@
           </div>
         </div>
         <div id="operatorActions" class="message-list muted-message">
-          Arahan operator akan muncul setelah simulasi.
+          Arahan akan muncul setelah simulasi.
         </div>
       </section>
     </section>
@@ -215,28 +275,28 @@
     <section class="panel formula-panel">
       <div class="panel-head">
         <div>
-          <span class="label">Formula V2</span>
-          <h2>Persamaan yang Memakai pH Target dan Turbidity Target</h2>
+          <span class="label">Formula</span>
+          <h2>Model PPM yang Menyentuh Tujuan Proses</h2>
         </div>
       </div>
 
       <div class="formula-grid">
         <article>
-          <h3>Alum</h3>
-          <code>Alum = 0.90 + 0.092*Turbidity_Gap + 0.028*Turbidity + 0.35*pH_Error - 0.008*Alkalinity</code>
-          <p>Alum tidak hanya membaca turbidity before, tetapi membaca beban penurunan menuju target turbidity.</p>
+          <h3>Alum ppm</h3>
+          <code>Alum_ppm = 8 + 0.42*Turbidity_Gap + 2.0*pH_Error - 0.045*Alkalinity</code>
+          <p>Alum diarahkan untuk menurunkan turbidity gap dan membentuk mikroflok. Jika alkalinity rendah, Alum tetap harus dikawal karena dapat menurunkan pH.</p>
         </article>
 
         <article>
-          <h3>Soda Ash</h3>
-          <code>Soda Ash = 0.15 + 2.10*pH_Gap - 0.012*Alkalinity + 0.155*Alum</code>
-          <p>Soda Ash tetap fokus pada pH, alkalinity, dan efek Alum yang menurunkan pH.</p>
+          <h3>Soda Ash ppm</h3>
+          <code>Soda_ppm = 4 + 12*pH_Gap - 0.05*Alkalinity + 0.18*Alum_ppm</code>
+          <p>Soda Ash mengejar target pH dan mengimbangi efek Alum yang mengonsumsi alkalinity dan dapat menurunkan pH.</p>
         </article>
 
         <article>
-          <h3>Polymer</h3>
-          <code>Polymer = 0.18 + 0.006*Turbidity_Gap + 0.065*Alum + 0.018*Residual_Turbidity_Gap - 0.002*Alkalinity</code>
-          <p>Polymer membantu flok dan mengejar target turbidity, tetapi tetap dibatasi agar tidak overdosing.</p>
+          <h3>Polymer ppm</h3>
+          <code>Polymer_ppm = 0.05 + 0.010*Turbidity_Gap + 0.012*Alum_ppm + 0.020*Residual_Gap</code>
+          <p>Polymer dibuat kecil karena larutan stoknya 100 ppm dan fungsinya hanya memperbaiki flok, bukan menggantikan Alum.</p>
         </article>
       </div>
     </section>
@@ -245,7 +305,7 @@
       <div class="panel-head">
         <div>
           <span class="label">Detail</span>
-          <h2>Detail Perhitungan</h2>
+          <h2>Detail Perhitungan dan Kelayakan</h2>
         </div>
       </div>
 
